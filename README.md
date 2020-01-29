@@ -1,5 +1,7 @@
 Test implementation of my own programming language called **Haze**. It is for my thesis project. The code is messy, the later implementation will be written in Go.
 
+Sample code:
+
 ```rust
 is_prime := fn n {
     if type(n) != "number" || int(n) != n {
