@@ -16,7 +16,7 @@ is_prime := fn n {
     case 2:
         return true
     }
-    for d := [2 .. sqrt(n)] {
+    for d := [2 .. floor(sqrt(n))] {
         if n % d == 0 {
             return false
         }
