@@ -125,11 +125,14 @@ function codegen(tree) {
             tree.first.forEach(function (param) {
                 params.push(param.value);
             });
+            var set_params_null = params.map(function (param) {
+                return " if (" + param + " === undefined) { " + param + " = $RUNTIME.null(); } ";
+            }).join(" ");
             params = params.join(", ");
             if (Array.isArray(tree.second)) {
-                return "$RUNTIME.function(function (" + params + ") { " + codegen(tree.second) + " })";
+                return "$RUNTIME.function(function (" + params + ") { " + set_params_null + codegen(tree.second) + " })";
             } else {
-                return "$RUNTIME.function(function (" + params + ") { return " + codegen(tree.second) + "; })";
+                return "$RUNTIME.function(function (" + params + ") { " + set_params_null + " return " + codegen(tree.second) + "; })";
             }
         }());
     }

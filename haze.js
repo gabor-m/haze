@@ -9,12 +9,16 @@ try {
     codegen(source_code).eval();
 } catch (e) {
     try {
-        if (typeof e === "object" && e.type) {
-            console.log("\u0000Error: " + runtime.to_string().value);
-        } else if (typeof e === "object" && e.message) {
-            console.log("\u0000Error: " + String(e.message));
-        } else if (typeof e === "string") {
-            console.log("\u0000Error: " + e);
+        if (e) {
+            if (typeof e === "object" && e.type) {
+                console.log("\u0000Error: " + runtime.to_string(e).value);
+            } else if (typeof e === "object" && e.message) {
+                console.log("\u0000Error: " + String(e.message));
+            } else if (typeof e === "string") {
+                console.log("\u0000Error: " + e);
+            } else {
+                console.log("\u0000Unknow error");
+            }
         } else {
             console.log("\u0000Unknow error");
         }
