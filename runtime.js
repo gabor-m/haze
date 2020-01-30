@@ -21,9 +21,13 @@ var runtime = {
         };
     },
     number: function (str) {
+        var n = Number(str);
+        if (!isFinite(n)) {
+            return runtime.fail("Number is too large to be represented");
+        }
         return {
             type: "number",
-            value: big_float.make(str)
+            value: n
         };
     },
     string: function (str) {
@@ -47,7 +51,9 @@ var runtime = {
         entries = entries || [];
         var map = immutable.OrderedMap();
         entries.forEach(function (entry) {
-            map = map.set(entry[0], entry[1]);
+            if (entry.type !== "null") {
+                map = map.set(entry[0], entry[1]);
+            }
         });
         return {
             type: "record",
@@ -88,7 +94,10 @@ var runtime = {
         case "object":
             var record = runtime.record();
             Object.keys(v).forEach(function (key) {
-                record.value = record.value.set(key, runtime.from_js(v[key]));
+                var val = runtime.from_js(v[key]);
+                if (val.type !== "null") {
+                    record.value = record.value.set(key, val);
+                }
             });
             return record;
         }
@@ -141,12 +150,14 @@ var runtime = {
             return runtime.string(str + "]");
         case "record":
             var str = "{";
-            v.value.entrySeq().forEach(function (item) {
+            // console.log(Array.from(v.value.entries()))
+            Array.from(v.value.entries()).forEach(function (item) {
                 if (str.length > 1) {
                     str += ", ";
                 }
                 var key = item[0];
                 var value = item[1];
+                // console.log("%val", item[2]);
                 if (key.match(/^[a-z](_?[a-zA-Z0-9]*)*$/g)) {
                     str += key + ": ";
                 } else {
@@ -212,13 +223,13 @@ var runtime = {
                     return 0;
                 }
             });
-            var entries_v1 = sorted_v1.entrySeq();
-            var entries_v2 = sorted_v2.entrySeq();
+            var entries_v1 = Array.from(sorted_v1.entries());
+            var entries_v2 = Array.from(sorted_v2.entries());
             
             var i;
             for (i = 0; i < size; i += 1) {
                 // console.log(entries_v1.get(i)[1], entries_v2.get(i)[1])
-                if (!(entries_v1.get(i)[0] === entries_v2.get(i)[0] && runtime.equals(entries_v1.get(i)[1], entries_v2.get(i)[1]).value)) {
+                if (!(entries_v1[i][0] === entries_v2.get[i][0] && runtime.equals(entries_v1.get[i][1], entries_v2.get[i][1]).value)) {
                     return runtime.boolean(false);
                 }
             }
@@ -269,28 +280,41 @@ var runtime = {
         if (v1.type !== "number" || v2.type !== "number") {
             return runtime.fail("Type error.");
         }
-        return runtime.number(big_float.add(v1.value, v2.value));
+        var result = big_float.add(v1.value, v2.value);
+        if (!isFinite(result)) {
+            return runtime.null(s);
+        }
+        return runtime.number(result);
     },
     sub: function (v1, v2) {
         if (v1.type !== "number" || v2.type !== "number") {
             return runtime.fail("Type error.");
         }
-        return runtime.number(big_float.sub(v1.value, v2.value));
+        var result = big_float.sub(v1.value, v2.value);
+        if (!isFinite(result)) {
+            return runtime.fail("Arithmetic error");
+        }
+        return runtime.number(result);
     },
     mul: function (v1, v2) {
         if (v1.type !== "number" || v2.type !== "number") {
             return runtime.fail("Type error.");
         }
-        return runtime.number(big_float.mul(v1.value, v2.value));
+        var result = big_float.mul(v1.value, v2.value);
+        if (!isFinite(result)) {
+            return runtime.fail("Arithmetic error");
+        }
+        return runtime.number(result);
     },
     div: function (v1, v2) {
         if (v1.type !== "number" || v2.type !== "number") {
             return runtime.fail("Type error.");
         }
-        if (big_float.is_zero(v2.value)) {
-            return runtime.null();
+        var result = big_float.div(v1.value, v2.value);
+        if (!isFinite(result)) {
+            return runtime.fail("Arithmetic error");
         }
-        return runtime.number(big_float.div(v1.value, v2.value));
+        return runtime.number(result);
     },
     mod: function (v1, v2) {
         return runtime.number(
@@ -350,15 +374,58 @@ var runtime = {
         }
     },
     push: function (v, val) {
-        if (from.type !== "array") {
+        if (v.type !== "array") {
             return runtime.fail("Must be an array");
         }
         var new_array = runtime.array();
         new_array.value = v.value.push(val);
         return new_array;
     },
-    set: function (v, key) {
-        
+    set: function (v, key, new_val) {
+        switch (v.type) {
+        case "string":
+            if (key.type !== "number") {
+                return runtime.fail("Index must be a number");
+            }
+            if (!big_float.is_integer(key.value)) {
+                return runtime.fail("Index must be an integer");
+            }
+            if (big_float.is_negative(key.value)) {
+                return runtime.fail("Index cannot be negative");
+            }
+            var index = Number(big_float.string(key.value));
+            if (index >= v.value.length) {
+                return runtime.fail("Index out of range");
+            }
+            if (new_val.type !== "number") {
+                return runtime.fail("Char must be a number");
+            }
+            if (!big_float.is_integer(new_val.value)) {
+                return runtime.fail("Char must be an integer");
+            }
+            if (big_float.is_negative(new_val.value)) {
+                return runtime.fail("Char cannot be negative");
+            }
+            var index = Number(big_float.string(key.value));
+            if (index >= v.value.length) {
+                return runtime.fail("Index out of range");
+            }
+            var new_val_js = new_val.value;
+            if (new_val_js > 0xffff) {
+                return runtime.fail("Char cannot be greater than " + String(0xffff));
+            }
+            
+            var str = v.value;
+            var new_str = str.substr(0, index) + String.fromCharCode(new_val_js) + str.substr(index + 1);
+            
+            return runtime.string(new_str);
+        case "array":
+            
+        case "record":
+            
+        default:
+            return runtime.fail("Type error.");
+        }
     },
     range: function (from, to) {
         if (from.type !== "number") {
@@ -402,11 +469,63 @@ var runtime = {
         }
         return f.value.apply(null, args);
     },
-    ensure_boolean: function (v) {
+    ensure_boolean: function (v, not_js_bool) {
         if (v.type !== "boolean") {
             return runtime.fail("Not boolean");
         }
+        if (not_js_bool) {
+            return v;
+        }
         return v.value;
+    },
+    catch: function (f) {
+        var result;
+        var error;
+        try {
+            result = f();
+        } catch (e) {
+            error = e;
+        }
+        return runtime.record([
+            ['error', error || runtime.null()],
+            ['value', result || runtime.null()],
+        ]);
+    },
+    iterator: function (v) {
+        if (v.type !== "string" && v.type !== "array" && v.type !== "record") {
+            return runtime.fail("Not iterable");
+        }
+        var i = 0;
+        var len = v.type === "string" ? v.value.length : v.value.count();
+        var entry_seq;
+        if (v.type === "record") {
+            entry_seq = Array.from(v.value.entries());
+        }
+        return {
+            next: function () {
+                var next;
+                switch (v.type) {
+                case "string":
+                    next = runtime.number(v.value.charCodeAt(i));
+                    break;
+                case "array":
+                    next = v.value.get(i);
+                    break;
+                case "record":
+                    var entry = entry_seq[i];
+                    next = runtime.record([
+                        ['key', runtime.string(entry[0])],
+                        ['value', entry[1]]
+                    ]);
+                    break;
+                }
+                i += 1;
+                return next;
+            },
+            has_next: function () {
+                return i < len;
+            }
+        }
     }
 };
 

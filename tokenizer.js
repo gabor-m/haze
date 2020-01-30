@@ -16,8 +16,8 @@ TOKENS
 */
 
 function tokenizer(source) {
-    var prefix = ":=<>!+-*&|/%^~.";
-    var suffix = ":=<>&|.";
+    var prefix = ":=<>!+-*?&|/%^~.";
+    var suffix = ":=<>&|.?";
     
     var c;
     var from;

@@ -358,6 +358,7 @@ var make_parse = function (stdlib_names) {
             this.first = left;
             this.second = a;
             if ((left.arity !== "unary" || left.id !== "function") &&
+                (left.arity !== "function" || left.value !== "fn") &&
                     left.arity !== "name" && left.id !== "(" &&
                     left.id !== "&&" && left.id !== "||" && left.id !== "?") {
                 error("Expected a variable name.");
@@ -509,6 +510,7 @@ var make_parse = function (stdlib_names) {
         if (n.arity !== "name") {
             n.error("Expected a new variable name.");
         }
+        
         scope.define(n);
         
         advance();
@@ -556,8 +558,13 @@ var make_parse = function (stdlib_names) {
             }
             advance();
             var case_record = {
-                cond: expression(0)
+                conds: [expression(0)]
             };
+            
+            while (token.id === ",") {
+                advance();
+                case_record.conds.push(expression(0));
+            }
             
             advance(":");
             new_scope();
@@ -579,6 +586,7 @@ var make_parse = function (stdlib_names) {
         
         this.arity = "case";
         this.cases = cases;
+        this.default_case = default_case;
         return this;
     });
     
@@ -635,10 +643,21 @@ var make_parse = function (stdlib_names) {
     
     stmt("for", function () {
         this.first = this;
-        advance("(declaration)");
-        this.second = expression(0);
+        if (token.arity !== "declaration") {
+            error("Expected a declaration");
+        }
+        advance(); // :=
+        var t = token;
+        this.var_name = t.value;
+        advance(); // n
+        advance(); // =
+        this.first = expression(0);
+        new_scope();
+        scope.define(t);
         this.second = block();
+        scope.pop();
         this.arity = "statement";
+        return this;
     });
 
     return function (source) {
