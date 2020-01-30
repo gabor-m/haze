@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>The Haze Programming Language</title>
+    <link href="https://fonts.googleapis.com/css?family=Roboto+Mono:300,300i,400,400i,700,700i&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.0/css/all.min.css" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <style type="text/css">
+        body {
+            padding: 0;
+            margin: 0;
+            font-family: 'Roboto Mono';
+        }
+        div, pre {
+            box-sizing: border-box;
+        }
+        #editor {
+            width: 100%;
+            height: calc(100% - 241px);
+            left: 0;
+            top: 40px;
+            position: fixed;
+        }
+        #title {
+            left: 0;
+            top: 0;
+            width: 100%;
+            position: fixed;
+            background-color: #6e6868;
+            color: #fff;
+            padding: 0 9px;
+            padding-right: 85px;
+            font-size: 17px;
+            font-weight: 300;
+            letter-spacing: 1px;
+            height: 40px;
+            line-height: 40px;
+            text-overflow: ellipsis;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        #title i {
+            margin-right: -5px;
+        }
+        strong {
+            font-weight: 600;
+        }
+        
+        #run {
+            position: fixed;
+            right: 5px;
+            top: 6.5px;
+            z-index: 5;
+            cursor: pointer;
+            background-color: #14f363;
+            color: #fff;
+            text-transform: uppercase;
+            height: 27px;
+            line-height: 27px;
+            border-radius: 4px;
+            width: 75px;
+            text-align: center;
+            font-weight: 600;
+        }
+        #run i {
+            margin-right: -4px;
+        }
+        
+        #console {
+            overflow-y: scroll;
+            position: fixed;
+            top: calc(100% - 215px);
+            height: 200px;
+            left: 0;
+            width: 100%;
+            color: #fff;
+            background-color: #262424;
+            padding: 15px;
+            font-weight: 300;
+            font-size: 14px;
+            border-top: 5px solid #464040;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+        }
+        #console span {
+            font-weight: 600;
+        }
+        #console .no-output {   
+            font-weight: 300;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    <div id="run"><i class="fas fa-play"></i> Run</div>
+    <div id="title">
+        <i class="fas fa-laptop-code"></i> The <strong>Haze</strong> Programming Language
+    </div>
+    <div id="editor">is_prime := fn n {
+    if type(n) != "number" || int(n) != n {
+        fail "Wrong type"
+    }
+    if n < 0 {
+        return is_prime(-n)
+    }
+    switch n {
+    case 0, 1:
+        return false
+    case 2:
+        return true
+    }
+    for d := [2 .. int(sqrt(n)) + 1] {
+        if n % d == 0 {
+            return false
+        }
+    }
+    return true
+}
+
+filter := fn arr, f {
+    new_arr := []
+    for i := arr {
+        if f(i) {
+            new_arr[] = i
+        }
+    }
+    return new_arr
+}
+
+// Prime numbers between 0 and 100
+print(filter([0 .. 100], is_prime))</div>
+
+<pre id="console"><span><i class="fas fa-terminal"></i> Output:</span>
+
+<div class="output"><span class="no-output">(no output)</span></div></pre>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.7/ace.js"></script>
+    <script src="ace-grammar.min.js"></script>
+    <script src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
+    <script>
+        var EDITOR;
+        (function () {
+            var editor = ace.edit("editor");
+            EDITOR = editor;
+            editor.setOptions({
+              fontFamily: "Roboto Mono",
+              fontSize: "14px"
+            });
+            editor.setTheme("ace/theme/merbivore_soft");
+
+            var grammar = {
+                "RegExpID"                          : "RE::",
+                    
+                "Style"                             : {
+            
+                 "comment"                      : "comment"
+                ,"atom"                         : "constant"
+                ,"keyword"                      : "keyword"
+                ,"this"                         : "keyword"
+                ,"builtin"                      : "support"
+                ,"operator"                     : "operator"
+                ,"identifier"                   : "identifier"
+                ,"property"                     : "constant.support"
+                ,"number"                       : "constant.numeric"
+                ,"string"                       : "string"
+                ,"regex"                        : "string.regexp"
+                    
+                },
+
+                "Lex"                               : {
+                
+                 "comment"                      : {"type":"comment","tokens":[
+     
+                                                [  "//",  null ],
+                                                
+                                                [  "/*",   "*/" ]
+                                                ]}
+                ,"identifier"                   : "RE::/[_A-Za-z$][_A-Za-z0-9$]*/"
+                ,"this"                         : "RE::/this\\b/"
+                ,"property"                     : "RE::/[_A-Za-z$][_A-Za-z0-9$]*/"
+                ,"number"                       : [
+                                               
+                                                "RE::/\\d*\\.\\d+(e[\\+\\-]?\\d+)?/",
+                                                "RE::/\\d+\\.\\d*/",
+                                                "RE::/\\.\\d+/",
+                                                
+                                                "RE::/0x[0-9a-fA-F]+L?/",
+                                                
+                                                "RE::/0b[01]+L?/",
+                                                
+                                                "RE::/0o[0-7]+L?/",
+                                                
+                                                "RE::/[1-9]\\d*(e[\\+\\-]?\\d+)?L?/",
+                                                
+                                                "RE::/0(?![\\dx])/"
+                                                ]
+                ,"string"                       : {"type":"escaped-block","escape":"\\","tokens":
+                                                
+                                                [ "RE::/(['\"])/",   1 ]
+                                                }
+                ,"regex"                        : {"type":"escaped-block","escape":"\\","tokens":
+                                                
+                                                [ "/",    "RE::#/[gimy]{0,4}#" ]
+                                                }
+                ,"operator"                     : {"tokens":[
+                                                "+", "-", "++", "--", "%", "..", ">>", "<<", ">>>",
+                                                "*", "/", "^", "|", "&", "!", "~",
+                                                ">", "<", "<=", ">=", "!=", "!==",
+                                                "=", "==", "===", "+=", "-=", "%=",
+                                                ">>=", ">>>=", "<<=", "*=", "/=", "|=", "&="
+                                                ]}
+                ,"delimiter"                    : {"tokens":[
+                                                "(", ")", "[", "]", "{", "}", ",", "=", ";", "?", ":",
+                                                "+=", "-=", "*=", "~=", "/=", "%=", "&=", "|=", "^=", "++", "--",
+                                                ">>=", "<<="
+                                                ]}
+                ,"atom"                         : {"autocomplete":true,"tokens":[
+                                                "true", "false", 
+                                                "null"
+                                                ]}
+                ,"keyword"                      : {"autocomplete":true,"tokens":[ 
+                                                "if", "while", "loop", "else",
+                                                "return", "break", "fail",
+                                                "fn", "for", "switch", "case", "default"
+                                                
+                                                ]}
+                ,"builtin"                      : {"autocomplete":true,"tokens":[ 
+                                                "Object", "Function", "Array", "String", 
+                                                "Date", "Number", "RegExp", "Math", "Exception",
+                                                "setTimeout", "setInterval", "parseInt", "parseFloat", 
+                                                "isFinite", "isNan", "alert", "prompt", "console", 
+                                                "window", "global", "this"
+                                                ]}
+
+                },
+
+                "Syntax"                            : {
+                
+                "dot_property"                  : {"sequence":[".", "property"]}
+                ,"js"                           : "comment | number | string | regex | keyword | operator | atom | (('}' | ')' | this | builtin | identifier | dot_property) dot_property*)"
+
+                },
+                "Parser"                            : [ ["js"] ]
+            };
+            var grammar_mode = AceGrammar.getMode( grammar );
+            grammar_mode.supportCodeFolding = true;
+            grammar_mode.supportCodeMatching = true;
+            grammar_mode.supportAutoCompletion = true;
+            grammar_mode.autocompleter.options = {inContext:true, dynamic:true};
+            grammar_mode.matcher( editor );
+            
+            editor.getSession().setMode(grammar_mode);
+        }());
+        
+        
+        // Run code
+        (function () {
+            var running = false;
+            $("#run").click(function () {
+                if (!running) {
+                    running = true;
+                    $("#console .output").html('<span class="no-output"><i class="fas fa-circle-notch fa-spin"></i> Loading...</span>');
+                    $.ajax('http://localhost:9561', {
+                        'data': EDITOR.getValue(),
+                        'type': 'POST',
+                        'processData': false,
+                        'contentType': 'text/plain',
+                        'success': function (data) {
+                            running = false;
+                            if (!data.trim()) {
+                                $("#console .output").html('<span class="no-output">(no output)</span>');
+                            } else {
+                                $("#console .output").text(data);
+                            }
+                        },
+                    });
+                }
+            });
+        }());
+    </script>
+</body>
+</html>
