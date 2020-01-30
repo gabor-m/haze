@@ -6,3 +6,5 @@ var codegen = require("./codegen.js");
 var source_code = process.argv[2] || "";
 
 codegen(source_code).eval();
+
+// process.stdout.write('\u0000');

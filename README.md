@@ -25,4 +25,17 @@ is_prime := fn n {
     }
     return true
 }
+
+filter := fn arr, f {
+    new_arr := []
+    for i := arr {
+        if f(i) {
+            new_arr[] = i
+        }
+    }
+    return new_arr
+}
+
+// Prime numbers between 0 and 100
+print(filter([0 .. 100], is_prime))
 ```
