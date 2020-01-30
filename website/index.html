@@ -90,6 +90,10 @@
             font-weight: 300;
             opacity: 0.5;
         }
+        
+        #console.error {
+            background-color: #974646;
+        }
     </style>
 </head>
 <body>
@@ -260,8 +264,9 @@ print(filter([0 .. 100], is_prime))</div>
             $("#run").click(function () {
                 if (!running) {
                     running = true;
+                    $("#console").removeClass("error");
                     $("#console .output").html('<span class="no-output"><i class="fas fa-circle-notch fa-spin"></i> Loading...</span>');
-                    $.ajax('http://localhost:9561', {
+                    $.ajax('https://cdn.haze.codes/', {
                         'data': EDITOR.getValue(),
                         'type': 'POST',
                         'processData': false,
@@ -271,6 +276,10 @@ print(filter([0 .. 100], is_prime))</div>
                             if (!data.trim()) {
                                 $("#console .output").html('<span class="no-output">(no output)</span>');
                             } else {
+                                if (data.indexOf('\u0000') >= 0) {
+                                    $("#console").addClass("error");
+                                    data = data.replace('\u0000', '');
+                                }
                                 $("#console .output").text(data);
                             }
                         },
