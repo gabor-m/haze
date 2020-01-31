@@ -67,6 +67,26 @@
             margin-right: -4px;
         }
         
+        #save {
+            position: fixed;
+            right: 88px;
+            top: 6.5px;
+            z-index: 5;
+            cursor: pointer;
+            background-color: #a7a7a7;
+            color: #fff;
+            text-transform: uppercase;
+            height: 27px;
+            line-height: 27px;
+            border-radius: 4px;
+            width: 75px;
+            text-align: center;
+            font-weight: 600;
+        }
+        #save i {
+            margin-right: -4px;
+        }
+        
         #console {
             overflow-y: scroll;
             position: fixed;
@@ -94,9 +114,14 @@
         #console.error {
             background-color: #974646;
         }
+        .swal2-input {
+            font-size: 12px!important;
+            font-family: 'Roboto Mono'!important;
+        }
     </style>
 </head>
 <body>
+    <div id="save"><i class="fas fa-save"></i> Save</div>
     <div id="run"><i class="fas fa-play"></i> Run</div>
     <div id="title">
         <i class="fas fa-laptop-code"></i> The <strong>Haze</strong> Programming Language
@@ -139,6 +164,7 @@ print(filter([0 .. 100], is_prime))</div>
 
 <div class="output"><span class="no-output">(no output)</span></div></pre>
     
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.7/ace.js"></script>
     <script src="ace-grammar.min.js"></script>
     <script src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
@@ -266,7 +292,7 @@ print(filter([0 .. 100], is_prime))</div>
                     running = true;
                     $("#console").removeClass("error");
                     $("#console .output").html('<span class="no-output"><i class="fas fa-circle-notch fa-spin"></i> Loading...</span>');
-                    $.ajax('https://cdn.haze.codes/', {
+                    $.ajax(location.hostname === 'haze.codes' ? 'https://cdn.haze.codes/' : 'http://localhost:9561', {
                         'data': EDITOR.getValue(),
                         'type': 'POST',
                         'processData': false,
@@ -286,6 +312,48 @@ print(filter([0 .. 100], is_prime))</div>
                     });
                 }
             });
+            
+            $("#save").click(function () {
+                if (!running) {
+                    running = true;
+                    $.ajax(location.hostname === 'haze.codes' ? 'https://cdn.haze.codes/' : 'http://localhost:9561', {
+                        'data': "%save" + EDITOR.getValue(),
+                        'type': 'POST',
+                        'processData': false,
+                        'contentType': 'text/plain',
+                        'success': function (data) {
+                            window.location.href = "#" + data;
+                            running = false;
+                            Swal.fire({
+                              title: 'Saved',
+                              text: 'Copy the url:',
+                              // 'https://haze.codes/#' + data,
+                              input: 'text',
+                              inputValue: 'https://haze.codes/#' + data,
+                              icon: 'success'
+                            });
+                            setTimeout(function () {
+                                
+                                $(".swal2-input")[0].setSelectionRange(0,0);
+                                $(".swal2-input").select();
+                            }, 300);
+                        },
+                    });
+                }
+            });
+            
+            // Load saved code
+            if (window.location.hash && window.location.hash.length === 41) {
+                $.ajax(location.hostname === 'haze.codes' ? 'https://cdn.haze.codes/' : 'http://localhost:9561', {
+                    'data': "%get" + window.location.hash.substr(1),
+                    'type': 'POST',
+                    'processData': false,
+                    'contentType': 'text/plain',
+                    'success': function (data) {
+                        EDITOR.setValue(data, -1);
+                    }
+                });
+            }
         }());
     </script>
 </body>
