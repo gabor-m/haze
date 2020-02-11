@@ -35,13 +35,21 @@
             font-weight: 300;
             letter-spacing: 1px;
             height: 40px;
-            line-height: 40px;
+            line-height: 35px;
             text-overflow: ellipsis;
             overflow: hidden;
             white-space: nowrap;
         }
         #title i {
             margin-right: -5px;
+        }
+        #title img {
+            display: inline-block;
+            vertical-align: middle;
+        }
+        #title .text {
+            display: inline-block;
+            vertical-align: middle;
         }
         strong {
             font-weight: 600;
@@ -124,7 +132,7 @@
     <div id="save"><i class="fas fa-save"></i> Save</div>
     <div id="run"><i class="fas fa-play"></i> Run</div>
     <div id="title">
-        <i class="fas fa-laptop-code"></i> The <strong>Haze</strong> Programming Language
+        <img src="logo.png" alt="Haze" /> <span class="text">The <strong>Haze</strong> Programming Language</span>
     </div>
     <div id="editor">is_prime := fn n {
     if type(n) != "number" || int(n) != n {
